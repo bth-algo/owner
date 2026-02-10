@@ -1,0 +1,1 @@
+- add labels. Labels sätts väl på organisationen så behöver inte kolla om de följer med från template. Det är bara om det kommer nya templates efter repot har skapats som skriptet behövs.
