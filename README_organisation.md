@@ -76,9 +76,18 @@ https://github.com/organizations/bth-algo/settings/rules
 
 
 
-### Add labels - NOT UPDATED
+### Add labels
 
-The labels are used when grading the submissions. Use script to create/update.
+The labels are used when grading the submissions. Labels are managed through the configuration tool.
+
+**Important:** GitHub's API does not support organization-level labels. Labels must be set on individual repositories.
+
+**Recommended Approach:**
+1. Configure labels in `org-settings/labels.json`
+2. Run `npm run configure-org` to apply labels to existing repositories matching the configured patterns
+3. **Add the same labels to your template repository** so all new repositories created from the template will automatically inherit them
+
+The configuration tool can apply labels to multiple repositories at once based on regex patterns (e.g., `algo-.*` matches all student repos starting with "algo-").
 
 ![](img/label.png)
 

@@ -1,0 +1,63 @@
+{
+  "COURSE_ID": 7050,
+  "ASSIGNMENTS": {
+    "bth/submit/kmom03": 63749,
+    "bth/submit/kmom06": 63750,
+    "bth/submit/kmom10": 63751,
+      "bth/submit/test-gitconfig": 63748
+  },
+  "KMOM_PATHS": {
+    "kmom01": {
+        "labs": [
+            "src/kmom01/lab_01"
+        ],
+        "kmoms": [
+            "tests/kmom01/convert"
+        ]
+    },
+    "kmom02": {
+        "kmoms": [
+            "tests/kmom02/marvin1"
+        ]
+    },
+    "kmom03": {
+        "labs": [
+            "src/kmom01/lab_01"
+        ],
+        "kmoms": [
+            "tests/kmom01/convert",
+            "tests/kmom02/marvin1",
+            "tests/kmom03/marvin2"
+        ]
+    },
+    "kmom04": {
+        "labs": [
+            "src/kmom04/lab_04"
+        ],
+        "kmoms": [
+            "tests/kmom04/marvin3"
+        ]
+    },
+    "kmom05": {
+        "kmoms": [
+            "tests/kmom05/emissions"
+        ]
+    },
+    "kmom06": {
+        "labs": [
+            "src/kmom04/lab_04"
+        ],
+        "kmoms": [
+            "tests/kmom04/marvin3",
+            "tests/kmom05/emissions",
+            "tests/kmom06/analyzer"
+        ]
+    },
+    "kmom10": {
+        "labs": [],
+        "kmoms": [
+            "tests/kmom10/typing"
+        ]
+    }
+  }
+}

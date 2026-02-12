@@ -1,0 +1,15 @@
+[
+  {
+    "name": "teacher",
+    "description": "Teachers with triage access to student repositories",
+    "privacy": "closed",
+    "notification_setting": "notifications_enabled",
+    "members": [
+      {
+        "username": "AndreasArne",
+        "role": "maintainer"
+      }
+    ],
+    "repositories": []
+  }
+]

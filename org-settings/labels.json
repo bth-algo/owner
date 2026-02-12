@@ -1,0 +1,49 @@
+{
+  "labels": [
+    {
+      "name": "Grade: A",
+      "color": "0e8a16",
+      "description": "Excellent work - exceeds expectations"
+    },
+    {
+      "name": "Grade: B",
+      "color": "1d76db",
+      "description": "Very good work - meets all requirements"
+    },
+    {
+      "name": "Grade: C",
+      "color": "fbca04",
+      "description": "Satisfactory work - meets basic requirements"
+    },
+    {
+      "name": "Grade: D",
+      "color": "f9d0c4",
+      "description": "Needs improvement - partially meets requirements"
+    },
+    {
+      "name": "Grade: F",
+      "color": "d73a4a",
+      "description": "Does not meet requirements"
+    },
+    {
+      "name": "needs-revision",
+      "color": "d93f0b",
+      "description": "Submission needs revision before grading"
+    },
+    {
+      "name": "ready-for-grading",
+      "color": "0075ca",
+      "description": "Submission is ready to be graded"
+    },
+    {
+      "name": "graded",
+      "color": "5319e7",
+      "description": "Submission has been graded"
+    }
+  ],
+  "apply_to_repos": [
+    "algo-.*",
+    ".*stud",
+    "template"
+  ]
+}

@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables
 .env
+org-settings/action-secrets.env
 
 # Logs
 npm-debug.log*
