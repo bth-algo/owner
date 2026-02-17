@@ -1,6 +1,31 @@
 {
   "labels": [
     {
+      "name": "Run tests",
+      "color": "0e8a16",
+      "description": "Trigger the test workflow"
+    },
+    {
+      "name": "Tests passed",
+      "color": "0e8a16",
+      "description": "All tests passed successfully"
+    },
+    {
+      "name": "Tests failed",
+      "color": "d73a4a",
+      "description": "Some tests failed"
+    },
+    {
+      "name": "Grade: G",
+      "color": "0e8a16",
+      "description": "Pass - meets requirements"
+    },
+    {
+      "name": "Grade: Ux",
+      "color": "d73a4a",
+      "description": "Does not meet requirements. Resubmission allowed"
+    },
+    {
       "name": "Grade: A",
       "color": "0e8a16",
       "description": "Excellent work - exceeds expectations"
@@ -18,25 +43,25 @@
     {
       "name": "Grade: D",
       "color": "f9d0c4",
-      "description": "Needs improvement - partially meets requirements"
+      "description": "Pass - meets requirements"
+    },
+    {
+      "name": "Grade: E",
+      "color": "f9d0c4",
+      "description": "Pass - meets minimum requirements"
     },
     {
       "name": "Grade: F",
       "color": "d73a4a",
-      "description": "Does not meet requirements"
+      "description": "Does not meet requirements. Resubmission not allowed"
     },
     {
-      "name": "needs-revision",
-      "color": "d93f0b",
-      "description": "Submission needs revision before grading"
+      "name": "Grade: U",
+      "color": "d73a4a",
+      "description": "Does not meet requirements. Resubmission not allowed"
     },
     {
-      "name": "ready-for-grading",
-      "color": "0075ca",
-      "description": "Submission is ready to be graded"
-    },
-    {
-      "name": "graded",
+      "name": "Graded",
       "color": "5319e7",
       "description": "Submission has been graded"
     }
