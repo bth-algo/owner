@@ -2,18 +2,33 @@
   "labels": [
     {
       "name": "Run tests",
-      "color": "0e8a16",
+      "color": "1d76db",
       "description": "Trigger the test workflow"
     },
     {
-      "name": "Tests passed",
+      "name": "Tests passed (TP)",
       "color": "0e8a16",
       "description": "All tests passed successfully"
     },
     {
       "name": "Tests failed",
-      "color": "d73a4a",
+      "color": "d93f0b",
       "description": "Some tests failed"
+    },
+    {
+      "name": "Integration failed",
+      "color": "d93f0b",
+      "description": "Could not send results to Canvas."
+    },
+    {
+      "name": "Submission not approved",
+      "color": "d93f0b",
+      "description": "Submission is not valid. Check the error message for details."
+    },
+    {
+      "name": "Needs revision",
+      "color": "d93f0b",
+      "description": "Fix the issues and resubmit. Check the error message for details."
     },
     {
       "name": "Grade: G",
@@ -22,7 +37,7 @@
     },
     {
       "name": "Grade: Ux",
-      "color": "d73a4a",
+      "color": "d93f0b",
       "description": "Does not meet requirements. Resubmission allowed"
     },
     {
@@ -32,22 +47,22 @@
     },
     {
       "name": "Grade: B",
-      "color": "1d76db",
+      "color": "0e8a16",
       "description": "Very good work - meets all requirements"
     },
     {
       "name": "Grade: C",
-      "color": "fbca04",
+      "color": "0e8a16",
       "description": "Satisfactory work - meets basic requirements"
     },
     {
       "name": "Grade: D",
-      "color": "f9d0c4",
+      "color": "006b75",
       "description": "Pass - meets requirements"
     },
     {
       "name": "Grade: E",
-      "color": "f9d0c4",
+      "color": "006b75",
       "description": "Pass - meets minimum requirements"
     },
     {
@@ -57,12 +72,12 @@
     },
     {
       "name": "Grade: U",
-      "color": "d73a4a",
+      "color": "d93f0b",
       "description": "Does not meet requirements. Resubmission not allowed"
     },
     {
       "name": "Graded",
-      "color": "5319e7",
+      "color": "1d76db",
       "description": "Submission has been graded"
     }
   ],
