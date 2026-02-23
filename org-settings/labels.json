@@ -21,16 +21,6 @@
       "description": "Could not send results to Canvas."
     },
     {
-      "name": "Submission not approved",
-      "color": "d93f0b",
-      "description": "Submission is not valid. Check the error message for details."
-    },
-    {
-      "name": "Needs revision",
-      "color": "d93f0b",
-      "description": "Fix the issues and resubmit. Check the error message for details."
-    },
-    {
       "name": "Grade: G",
       "color": "0e8a16",
       "description": "Pass - meets requirements"
