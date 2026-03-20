@@ -1,12 +1,12 @@
 {
-  "COURSE_ID": 7052,
-  "ASSIGNMENTS": {
+  "COURSE_ID2": 7052,
+  "ASSIGNMENTS2": {
     "bth/submit/kmom03": 63749,
     "bth/submit/kmom06": 63750,
     "bth/submit/kmom10": 63751,
     "bth/submit/invite": 64521
   },
-  "KMOM_PATHS": {
+  "KMOM_PATHS2": {
     "kmom01": {
         "kmoms": [
             "tests/kmom01/Searching.Tests/Searching.Tests.csproj"
