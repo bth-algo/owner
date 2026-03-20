@@ -31,7 +31,17 @@ Important repos:
 `npx bth-algo create-repo -n algo-<abcd25> -t template2 -d "Course repo for algo" -b kmom03-only -u <githubAccount>`  
 -n the name of the template repo (template2 in bth-algo)
 -b kmom03-only means that main and only branch `bth/submit/kmom03` is created
-3. Studenten letar upp sitt repo, klonar det i `dbwebb-kurser`-katalogen och kör **task setup**. Allt ska bli grönt.
+3. The student finds its repo on GitHub, clonaes it in the  `dbwebb-kurser`-directory and run **task setup**. Run suggested commands until every test is green.
+
+
+### Hand in kmom01 and kmom02
+
+1. Do the task in the kmom
+2. tag when you are ready
+
+### PR kmom03
+
+1. No code to hand in. Do a PR an follow the instructions."
 
 
 ### Example of commands
