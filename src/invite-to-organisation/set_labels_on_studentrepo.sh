@@ -32,7 +32,7 @@ echo "================================"
 echo
 
 
----------- Läs JSON -> skapa “objekt” ----------
+# ---------- Läs JSON -> skapa “objekt” ----------
 # Vi håller en lista med objektnamn (label_0, label_1, ...)
 declare -a LABEL_OBJECTS=()
 
@@ -59,10 +59,7 @@ while IFS=$'\t' read -r name color description; do
 done < <(jq -r '.labels[] | [.name, .color, .description] | @tsv' "$LABELS_JSON")
 
 
-
-
-
- ---------- Skapa/uppdatera labels i målrepo ----------
+# ---------- Skapa/uppdatera labels i målrepo ----------
 echo "Skapar/uppdaterar labels i $ORG/$REPO_NAME..."
 
 for obj in "${LABEL_OBJECTS[@]}"; do
@@ -73,10 +70,10 @@ for obj in "${LABEL_OBJECTS[@]}"; do
     color="${label[color]}"
     description="${label[description]}"
 
-        echo "➡️  Label:"
-    echo "   Name: $name"
-    echo "   Color: $color"
-    echo "   Description: $description"
+    #echo "➡️  Label:"
+    #echo "   Name: $name"
+    #echo "   Color: $color"
+    #echo "   Description: $description"
 
     # Försök skapa
     if ! gh api \
@@ -97,9 +94,9 @@ for obj in "${LABEL_OBJECTS[@]}"; do
         -f color="$color" \
         -f description="$description" \
         >/dev/null
-        echo "   ♻️  Uppdaterad"
+        #echo "   ♻️  Uppdaterad"
     else
-        echo "   ✅ Skapad"
+        #echo "   ✅ Skapad"
     fi
 
     echo

@@ -96,7 +96,7 @@ async function createRepo(organization, login, repoName, notify) {
     try {
         await octokit.request('POST /repos/{template_owner}/{template_repo}/generate', {
             template_owner: organization,
-            template_repo: 'template',
+            template_repo: 'template2',
             owner: organization,
             name: repoName,
             private: true,
@@ -169,7 +169,14 @@ async function processSubmission(submission, course) {
             await notify(inviteRes.status,
                 `Invitation sent to ${githubUsername} successfully.\n\nGo to ${orgInviteUrl} to accept the invitation.\nYour repo: ${repoUrl}`
             );
-            spawn("./set_labels_on_studentrepo.sh", repoName, { stdio: "inherit" });
+            const child = spawn("bash", ["./set_labels_on_studentrepo.sh", repoName], {
+                stdio: "inherit",
+            });
+            child.on("close", (code) => {
+                if (code !== 0) {
+                    console.error("Script set_labels_on_studentrepo.sh failed");
+                }
+            });
         }
     } catch (error) {
         if (error.status !== 422) {
@@ -186,6 +193,14 @@ async function processSubmission(submission, course) {
                 await notify(error.status,
                     `Invitation sent to ${githubUsername} successfully.\n\nGo to ${orgInviteUrl} to accept the invitation.\nYour repo: ${repoUrl}`
                 );
+                const child = spawn("bash", ["./set_labels_on_studentrepo.sh", repoName], {
+                    stdio: "inherit",
+                });
+                child.on("close", (code) => {
+                    if (code !== 0) {
+                        console.error("Script set_labels_on_studentrepo.sh failed");
+                    }
+                });
             }
         } else {
             console.error(`[${githubUsername}] Validation error (422): ${message}`);
