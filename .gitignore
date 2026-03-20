@@ -4,7 +4,7 @@ node_modules/
 # Environment variables
 .env
 org-settings/action-secrets.env
-src/invite-to-organisation/process.env
+src/invite-to-organisation/.env
 
 # Logs
 npm-debug.log*
