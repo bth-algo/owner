@@ -33,6 +33,19 @@ Important repos:
 -b kmom03-only means that main and only branch `bth/submit/kmom03` is created
 3. The student finds its repo on GitHub, clonaes it in the  `dbwebb-kurser`-directory and run **task setup**. Run suggested commands until every test is green.
 
+NOTE: if student repo does not get labels, run:
+`npm run configure-org`
+answer n (no) to everything except: 
+
+```text
+═══ LABELS ═══  
+Found 8 label(s) to manage  
+Found 6 repositories matching patterns
+
+Apply labels to 6 existing repositories? (Y/n) Y
+```
+=> the student repo gets its labels
+
 
 ### Hand in kmom01 and kmom02
 
