@@ -31,36 +31,6 @@
       "description": "Does not meet requirements. Resubmission allowed"
     },
     {
-      "name": "Grade: A",
-      "color": "0e8a16",
-      "description": "Excellent work - exceeds expectations"
-    },
-    {
-      "name": "Grade: B",
-      "color": "0e8a16",
-      "description": "Very good work - meets all requirements"
-    },
-    {
-      "name": "Grade: C",
-      "color": "0e8a16",
-      "description": "Satisfactory work - meets basic requirements"
-    },
-    {
-      "name": "Grade: D",
-      "color": "006b75",
-      "description": "Pass - meets requirements"
-    },
-    {
-      "name": "Grade: E",
-      "color": "006b75",
-      "description": "Pass - meets minimum requirements"
-    },
-    {
-      "name": "Grade: F",
-      "color": "d73a4a",
-      "description": "Does not meet requirements. Resubmission not allowed"
-    },
-    {
       "name": "Grade: U",
       "color": "d93f0b",
       "description": "Does not meet requirements. Resubmission not allowed"
@@ -74,6 +44,6 @@
   "apply_to_repos": [
     "algo-.*",
     ".*stud",
-    "template"
+    "template2"
   ]
 }
