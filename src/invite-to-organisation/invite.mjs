@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { Octokit } from "octokit";
 import fs from 'fs/promises';
+import { spawn } from "node:child_process";
 
 const octokit = new Octokit({
     auth: process.env["GITHUB_TOKEN"]
@@ -168,6 +169,7 @@ async function processSubmission(submission, course) {
             await notify(inviteRes.status,
                 `Invitation sent to ${githubUsername} successfully.\n\nGo to ${orgInviteUrl} to accept the invitation.\nYour repo: ${repoUrl}`
             );
+            spawn("./set_labels_on_studentrepo.sh", repoName, { stdio: "inherit" });
         }
     } catch (error) {
         if (error.status !== 422) {
