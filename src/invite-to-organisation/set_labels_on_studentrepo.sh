@@ -95,8 +95,6 @@ for obj in "${LABEL_OBJECTS[@]}"; do
         -f description="$description" \
         >/dev/null
         #echo "   ♻️  Uppdaterad"
-    else
-        #echo "   ✅ Skapad"
     fi
 
     echo

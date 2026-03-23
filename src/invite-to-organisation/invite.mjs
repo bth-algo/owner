@@ -105,6 +105,14 @@ async function createRepo(organization, login, repoName, notify) {
     } catch (error) {
         if (error.status === 422) {
             console.error(`[${repoName}] Repository already exists.`);
+            const child = spawn("bash", ["./set_labels_on_studentrepo.sh", repoName], {
+                stdio: "inherit",
+            });
+            child.on("close", (code) => {
+                if (code !== 0) {
+                    console.error("Script set_labels_on_studentrepo.sh failed");
+                }
+            });
             await notify(error.status, `Repository ${repoName} already exists.`);
         } else {
             console.error(`[${repoName}] Failed to create repository (status=${error.status}):`, error.message);
