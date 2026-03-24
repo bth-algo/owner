@@ -593,6 +593,102 @@ export class OrganizationService {
     return results;
   }
 
+  /**
+   * Delete a label from a repository
+   * @param {string} repoName - Repository name
+   * @param {string} labelName - Label name to delete
+   * @returns {Promise<void>}
+   */
+  async deleteRepoLabel(repoName, labelName) {
+    try {
+      await this.octokit.issues.deleteLabel({
+        owner: this.org,
+        repo: repoName,
+        name: labelName
+      });
+    } catch (error) {
+      if (error.status === 404) {
+        return; // Already gone
+      }
+      throw new Error(`Failed to delete label "${labelName}" in ${repoName}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Sync labels on a single repository: create/update desired labels, delete any others
+   * @param {string} repoName - Repository name
+   * @param {array} labels - Array of desired label configurations {name, color, description}
+   * @returns {Promise<{created: string[], updated: string[], deleted: string[], failed: string[]}>}
+   */
+  async syncLabelsToRepo(repoName, labels) {
+    const results = { created: [], updated: [], deleted: [], failed: [] };
+
+    const existingLabels = await this.getRepoLabels(repoName);
+    const existingByName = new Map(existingLabels.map(l => [l.name, l]));
+    const desiredNames = new Set(labels.map(l => l.name));
+
+    // Create or update desired labels
+    for (const label of labels) {
+      try {
+        if (existingByName.has(label.name)) {
+          await this.updateRepoLabel(repoName, label);
+          results.updated.push(label.name);
+        } else {
+          await this.createRepoLabel(repoName, label);
+          results.created.push(label.name);
+        }
+      } catch (error) {
+        results.failed.push(`${label.name}: ${error.message}`);
+      }
+    }
+
+    // Delete labels not in the desired list
+    for (const existing of existingLabels) {
+      if (!desiredNames.has(existing.name)) {
+        try {
+          await this.deleteRepoLabel(repoName, existing.name);
+          results.deleted.push(existing.name);
+        } catch (error) {
+          results.failed.push(`delete ${existing.name}: ${error.message}`);
+        }
+      }
+    }
+
+    return results;
+  }
+
+  // ============ USER & INVITATION ============
+
+  /**
+   * Get a GitHub user's ID by username
+   * @param {string} username - GitHub username
+   * @returns {Promise<number>} GitHub user ID
+   */
+  async getUserId(username) {
+    try {
+      const { data } = await this.octokit.users.getByUsername({ username });
+      return data.id;
+    } catch (error) {
+      if (error.status === 404) {
+        throw new Error(`GitHub user "${username}" not found`);
+      }
+      throw new Error(`Failed to look up user "${username}": ${error.message}`);
+    }
+  }
+
+  /**
+   * Invite a GitHub user to the organization
+   * @param {number} githubUserId - GitHub user ID (numeric)
+   * @returns {Promise<object>} Invitation response
+   */
+  async inviteUser(githubUserId) {
+    return this.octokit.orgs.createInvitation({
+      org: this.org,
+      invitee_id: githubUserId,
+      role: 'direct_member'
+    });
+  }
+
   // ============ COPILOT SETTINGS ============
 
   /**

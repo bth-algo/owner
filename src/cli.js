@@ -7,6 +7,7 @@ import { getGithubClient, getOrganizationName, UserRole } from './auth/github-cl
 import { RepositoryService } from './services/repository.service.js';
 import { BranchService } from './services/branch.service.js';
 import { OrganizationService } from './services/organization.service.js';
+import { CanvasService } from './services/canvas.service.js';
 import { BackupManager } from './utils/backup.js';
 import { PromptManager } from './utils/prompt.js';
 import { SettingsDiff } from './utils/settings-diff.js';
@@ -686,6 +687,177 @@ program
       process.exit(1);
     } finally {
       prompt.close();
+    }
+  });
+
+/**
+ * Process Submissions Command
+ * Fetches student submissions from Canvas, invites users to the GitHub org,
+ * creates repos from template, syncs labels, and posts grades back to Canvas.
+ */
+program
+  .command('process-submissions')
+  .description('Process Canvas submissions: invite students, create repos, sync labels, and grade')
+  .option('-t, --template <template>', 'Template repository name', 'template2')
+  .action(async (options) => {
+    try {
+      const canvasToken = process.env.CANVAS_TOKEN;
+      if (!canvasToken) {
+        console.error(chalk.red('\n❌ Missing CANVAS_TOKEN environment variable\n'));
+        process.exit(1);
+      }
+
+      const canvas = new CanvasService(canvasToken);
+      const adminClient = getGithubClient(UserRole.ADMIN);
+
+      // Load courses config
+      let courses;
+      try {
+        const raw = await fs.readFile('org-settings/courses.json', 'utf-8');
+        courses = JSON.parse(raw);
+        console.log(chalk.blue(`\nLoaded ${courses.length} course(s) from org-settings/courses.json\n`));
+      } catch (err) {
+        console.error(chalk.red(`Failed to read org-settings/courses.json: ${err.message}`));
+        process.exit(1);
+      }
+
+      // Load labels config
+      let labelsConfig;
+      try {
+        labelsConfig = JSON.parse(await fs.readFile('org-settings/labels.json', 'utf-8'));
+      } catch (err) {
+        console.error(chalk.red(`Failed to read org-settings/labels.json: ${err.message}`));
+        process.exit(1);
+      }
+
+      for (const course of courses) {
+        const { courseId, assignmentId, organization, repoPrefix } = course;
+        console.log(chalk.blue.bold(`\n═══ Course ${courseId} (org: ${organization}, prefix: ${repoPrefix}) ═══\n`));
+
+        // Create services scoped to this course's organization
+        const repoService = new RepositoryService(adminClient, organization);
+        const orgService = new OrganizationService(adminClient, organization);
+
+        const submissions = await canvas.fetchStudentSubmissions(courseId, assignmentId);
+        console.log(chalk.blue(`Found ${submissions.length} submission(s).\n`));
+
+        for (const submission of submissions) {
+          const { githubUsername, email, userId, attempt } = submission;
+
+          const notify = (status, comment) =>
+            canvas.updateSubmission(courseId, assignmentId, userId, attempt, status, comment);
+
+          if (!githubUsername) {
+            console.error(chalk.red(`[user=${userId}] Could not extract a GitHub username from submission.`));
+            await notify(410, 'Could not extract a GitHub username from submission.');
+            continue;
+          }
+
+          const emailPrefix = email.split('@')[0];
+          const repoName = `${repoPrefix}-${emailPrefix}`;
+          const repoUrl = `https://github.com/${organization}/${repoName}`;
+          const orgInviteUrl = `https://github.com/orgs/${organization}/invitation`;
+
+          // --- Look up GitHub user ---
+          let githubUserId;
+          try {
+            githubUserId = await orgService.getUserId(githubUsername);
+            console.log(chalk.green(`[${githubUsername}] Found GitHub user ID: ${githubUserId}`));
+          } catch (error) {
+            console.error(chalk.red(`[${githubUsername}] Could not find GitHub user: ${error.message}`));
+            await notify(error.status ?? 404, `Could not find a GitHub user with the username "${githubUsername}": ${error.message}`);
+            continue;
+          }
+
+          // --- Invite to org ---
+          let inviteStatus;
+          try {
+            const inviteRes = await orgService.inviteUser(githubUserId);
+            inviteStatus = inviteRes.status;
+            console.log(chalk.green(`[${githubUsername}] Invited to ${organization}.`));
+          } catch (error) {
+            if (error.status !== 422) {
+              console.error(chalk.red(`[${githubUsername}] Failed to invite: ${error.message}`));
+              await notify(error.status, `Failed to invite ${githubUsername}: ${error.message}`);
+              continue;
+            }
+
+            const message = error.response?.data?.errors?.[0]?.message ?? '';
+            if (message.includes('is already a part of this organization')) {
+              console.log(chalk.yellow(`[${githubUsername}] Already a member of ${organization}.`));
+              inviteStatus = 422;
+            } else {
+              console.error(chalk.red(`[${githubUsername}] Validation error (422): ${message}`));
+              await notify(422, `Validation error for ${githubUsername}: ${message}`);
+              continue;
+            }
+          }
+
+          // --- Create repo from template ---
+          let repoCreated = false;
+          try {
+            await repoService.createFromTemplate(
+              options.template,
+              repoName,
+              '',
+              true // private
+            );
+            repoCreated = true;
+          } catch (error) {
+            if (error.message.includes('already exists')) {
+              console.log(chalk.yellow(`[${repoName}] Repository already exists.`));
+              repoCreated = true; // still sync labels
+            } else {
+              console.error(chalk.red(`[${repoName}] Failed to create repository: ${error.message}`));
+              await notify(error.status ?? 500, `Failed to create repository ${repoName}: ${error.message}`);
+              continue;
+            }
+          }
+
+          // --- Add collaborator ---
+          if (repoCreated) {
+            try {
+              await repoService.addCollaborator(repoName, githubUsername, 'push');
+            } catch (error) {
+              console.error(chalk.red(`[${repoName}] Failed to add ${githubUsername} as collaborator: ${error.message}`));
+              await notify(error.status ?? 500, `Failed to add ${githubUsername} as collaborator to ${repoName}: ${error.message}`);
+              continue;
+            }
+
+            // --- Sync labels ---
+            try {
+              const labelResults = await orgService.syncLabelsToRepo(repoName, labelsConfig.labels || []);
+              const total = labelResults.created.length + labelResults.updated.length + labelResults.deleted.length;
+              console.log(chalk.green(`[${repoName}] Labels synced (${labelResults.created.length} created, ${labelResults.updated.length} updated, ${labelResults.deleted.length} deleted)`));
+              if (labelResults.failed.length > 0) {
+                labelResults.failed.forEach(f => console.log(chalk.red(`  • ${f}`)));
+              }
+            } catch (error) {
+              console.error(chalk.red(`[${repoName}] Failed to sync labels: ${error.message}`));
+            }
+
+            // --- Notify Canvas ---
+            if (inviteStatus === 422) {
+              await notify(inviteStatus,
+                `You are already a member of ${organization}.\n\nYour repo: ${repoUrl}`
+              );
+            } else {
+              await notify(inviteStatus,
+                `Invitation sent to ${githubUsername} successfully.\n\nGo to ${orgInviteUrl} to accept the invitation.\nYour repo: ${repoUrl}`
+              );
+            }
+          }
+        }
+      }
+
+      console.log(chalk.green('\n✅ All submissions processed!\n'));
+
+    } catch (error) {
+      console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+      if (error.stack) {
+        console.error(chalk.gray(error.stack));
+      }
+      process.exit(1);
     }
   });
 

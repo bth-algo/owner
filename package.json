@@ -13,7 +13,8 @@
     "delete-repo": "node src/cli.js delete-repo",
     "configure-org": "node src/cli.js configure-org",
     "restore-org": "node src/cli.js restore-org",
-    "list-branches": "node src/cli.js list-branches"
+    "list-branches": "node src/cli.js list-branches",
+    "process-submissions": "node src/cli.js process-submissions"
   },
   "keywords": [
     "github",
