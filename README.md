@@ -1,99 +1,210 @@
-# Documentation of this organisation 
+# Documentation of this organisation
 
-Documentation of the course setup and tools to work with the course.
-
-These are the steps to get going setting up the organisation.
+Documentation of the course setup, tools and CLI for working with the course.
 
 
 
-## The organisation
+## CLI tool overview
 
-Ask Oscar to create the organisation for you, name it "bth-algo" or "bth-webtec" or similair.
+This repository contains a CLI tool (`bth-algo`) that automates common organisation management tasks. All commands are run from the project root.
 
-Give Oscar your GitHub acronym so he can add you as owner of the organisation.
+### Installation
 
-Ask him to enable SSO.
+```bash
+pnpm install
+```
 
+### Available commands
 
+| Command | Description |
+|---|---|
+| `npm run configure-org` | Apply organisation settings (variables, secrets, privileges, rulesets, teams, labels) from config files |
+| `npm run restore-org -- -b <file>` | Restore organisation settings from a backup file |
+| `npm run create-repo -- -n <name>` | Create a repository from template with kmom branches |
+| `npm run delete-repo -- -n <name>` | Delete a repository (admin only) |
+| `npm run list-branches -- -n <name>` | List all branches in a repository |
+| `npm run process-submissions` | Process Canvas submissions: invite students, create repos, sync labels, grade |
 
-## The owner repo
+### Environment variables
 
-Create a owner repo to keep documentation of the setup of the organisation and workflow.
+Configure these in the `.env` file at the project root:
 
-You can also use the owner repo to store utilities and scripts used when working with the course.
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_ORG_NAME` | Yes | GitHub organisation name (e.g. `bth-algo`) |
+| `GITHUB_ADMIN_TOKEN` | Yes | Admin token with scopes: `repo`, `delete_repo`, `admin:org` |
+| `GITHUB_STUDENT_TOKEN` | Yes | Student token with scope: `repo` |
+| `CANVAS_TOKEN` | For `process-submissions` | Canvas LMS API token |
 
-Make the owner repo private.
+### Configuration files
 
+All configuration lives in `org-settings/`:
 
-
-## Add owners of the organisation
-
-Invite the individuals who should be owners of the repo. Keep it to a minimum to avoid disasters, select those who will work with the course structure. 
-
-Ordinary teachers can be part of the teacher team.
-
-
-
-## Add a teacher team & teachers
-
-[Create the team for the teachers](https://github.com/orgs/bth-algo/teams), use the team name "teacher". The teachers should be able to view all students repo and to approve pull requests.
-
-Add the individuals who should act as teachers. Add them as ordinary members of the organisation and add them to the teacher team.
-
-The team teacher should have the [triage role for all repositories ("All-repository triage")](https://github.com/organizations/bth-algo/settings/org_role_assignments), otherwise they do not see the private repos created by the students. 
-
-
-
-## How to setup the organisation
-
-Review this [README](./README_organisation.md) on how to setup the organisation.
-
-
-
-## Add website repo
-
-Add the website repo for the course, name it as `bth-algo.github.io/`. Make it public so students can issue about improvements. Publish the website as GitHub pages.
-
-## Add template repo
-
-Review this [README](./README_templaterepo.md) on how to setup the template repo.
+| File | Purpose |
+|---|---|
+| `action-variables.json` | GitHub Actions organisation variables |
+| `action-secrets.env` | GitHub Actions organisation secrets |
+| `member-privileges.json` | Organisation member privilege settings |
+| `branch-rulesets.json` | Branch protection rulesets |
+| `teams.json` | Team definitions and members |
+| `labels.json` | Label definitions and repo-matching patterns |
+| `courses.json` | Canvas course mappings for `process-submissions` |
+| `copilot-settings.json` | Copilot settings (placeholder) |
 
 
 
-## Add your student user to the organisation - BELOW IS NOT UPDATED
+## Steps to set up the organisation
 
-You should have a student user to be able to verify that the students see the correct things. This is how to work with the student user.
-
-
-
-### Invite
-
-Invite your student user to the organisation, as an ordinary member without a team. You get an email with the invitation, I open up an incognito browser and puts the invitation link there. _Unsure if SSO is a good thing or not, and if it can be enforced to all students or if it is optional._
-
-The student user should see the website repo, but not the owner repo.
-
-(Verify that the student user can not push to website...)
+Below are the tasks that need to be done, in order. Each section explains **what** needs to happen and **how** — either manually through the GitHub UI or with the CLI tool.
 
 
 
-### Work with git as student
+### 1. Create the organisation
 
-Setup so you can work as the student user with Git, locally. Review this [README](./README_student.md) on how to setup that.
+**What:** A GitHub organisation needs to exist.
 
-
-
-## Add default student repo
-
-Its useful to have a default student repo, that looks exact like the first student repo that the students should use. YOu can then opt to let students use this repo as a template, or fork it, as a staRting point.
-
-Create an internal repo (with your teacher user) like algo-abcd26. If you change things, later on, you can add more repos with different names, for example algo-abcd27.
-
-Verify that it is the teacher user that made the first commit.
-
-Verify that your student user can see the student repo.
+**How (manual):** Ask Oscar to create the organisation (e.g. `bth-algo`, `bth-webtec`). Give him your GitHub username so he can add you as owner. Ask him to enable SSO.
 
 
 
-## How to integrate with Canvas
+### 2. Create the owner repo
 
-The steps to integrate the GitHub organisation with Canvas is explained in [its own README](./README_canvas.md).
+**What:** A private repo for documentation, scripts and configuration of the organisation.
+
+**How (manual):** Create a private repo in the organisation. This is the repo you are reading now.
+
+
+
+### 3. Add owners
+
+**What:** Invite individuals who manage the course structure as organisation owners. Keep it to a minimum. Ordinary teachers belong in the teacher team instead.
+
+**How (manual):** Invite via the GitHub organisation settings page.
+
+
+
+### 4. Add a teacher team and teachers
+
+**What:** A team called `teacher` that can view all student repos and approve pull requests.
+
+**How (manual):**
+1. [Create the team](https://github.com/orgs/bth-algo/teams) with the name `teacher`.
+2. Add teachers as ordinary members of the organisation and add them to the team.
+3. Give the team the [triage role for all repositories ("All-repository triage")](https://github.com/organizations/bth-algo/settings/org_role_assignments) so they can see private student repos.
+
+**How (CLI):** Configure teams in `org-settings/teams.json` and run:
+```bash
+npm run configure-org
+```
+
+
+
+### 5. Configure organisation settings
+
+**What:** Member privileges, branch rulesets, action secrets/variables and labels need to be set.
+
+**How (manual):** See [README_organisation.md](./README_organisation.md) for the full list of settings and where to find them in the GitHub UI.
+
+**How (CLI):** All settings are defined in `org-settings/` config files. Apply them all at once:
+```bash
+npm run configure-org
+```
+The command walks through each category (variables, secrets, privileges, rulesets, teams, labels) and asks for confirmation before each change. A backup of current settings is created automatically before any changes are made.
+
+
+
+### 6. Add website repo
+
+**What:** A public repo for the course website, published via GitHub Pages.
+
+**How (manual):** Create a repo named `bth-algo.github.io` and enable GitHub Pages in the repo settings.
+
+
+
+### 7. Add template repo
+
+**What:** A template repo containing the starter files for student repos.
+
+**How (manual):** See [README_templaterepo.md](./README_templaterepo.md) for what the template should contain.
+
+
+
+### 8. Add a test student user
+
+**What:** A student user to verify that students see the correct things.
+
+**How (manual):**
+1. Invite your student user to the organisation as an ordinary member (no team).
+2. Accept the invitation (e.g. in an incognito browser).
+3. Verify the student can see the website repo but **not** the owner repo.
+
+**How (CLI):**
+```bash
+npm run create-repo -- -n algo-teststud -t template2 -u <student-github-username>
+```
+
+See [README_student.md](./README_student.md) for setting up local Git as the student user.
+
+
+
+### 9. Add a default student repo
+
+**What:** A reference repo that looks exactly like a real student repo, useful for testing.
+
+**How (manual):** Create an internal repo (e.g. `algo-abcd26`) from the template. Verify with your student user that it is visible.
+
+**How (CLI):**
+```bash
+npm run create-repo -- -n algo-abcd26 -t template2
+```
+
+
+
+### 10. Integrate with Canvas
+
+**What:** When a student submits their GitHub username on Canvas, a repo should be created, the student invited to the org, labels synced, and Canvas graded automatically.
+
+**How (manual):** For each submission: invite the student to the org, create a repo from the template, add them as collaborator, set labels on the repo, and update the Canvas grade.
+
+**How (CLI):**
+1. Configure `org-settings/courses.json` with your Canvas course/assignment IDs:
+   ```json
+   [
+     {
+       "courseId": 7052,
+       "assignmentId": 64521,
+       "organization": "bth-algo",
+       "repoPrefix": "algo"
+     }
+   ]
+   ```
+   - `courseId` / `assignmentId` — from the Canvas URL
+   - `organization` — the GitHub org for this course (allows multi-org support)
+   - `repoPrefix` — student repos will be named `<repoPrefix>-<email-prefix>` (e.g. `algo-abcd25`)
+
+2. Set `CANVAS_TOKEN` in `.env`.
+
+3. Run once:
+   ```bash
+   npm run process-submissions
+   ```
+
+4. Or schedule with PM2 to run every 3 minutes:
+   ```bash
+   npx pm2 start ecosystem.config.js
+   ```
+
+**What happens per submission:**
+1. Fetches all submissions with status `submitted` from Canvas.
+2. Looks up the GitHub user by the username the student submitted.
+3. Invites the user to the organisation (skips if already a member).
+4. Creates a private repo from the template (default `template2`, override with `--template`).
+5. Adds the student as collaborator with push access.
+6. Creates kmom branches (`bth/submit/kmom03`) — override with `--branches all` to also create `kmom06` and `kmom10`.
+7. Syncs labels from `org-settings/labels.json` onto the repo (creates missing, updates existing, deletes extras).
+8. Posts the grade and a comment back to Canvas with the repo URL and invitation link.
+
+**Options:**
+```bash
+npm run process-submissions -- --template my-other-template --branches all
+```

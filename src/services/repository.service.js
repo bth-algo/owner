@@ -43,14 +43,15 @@ export class RepositoryService {
 
       return data;
     } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
       if (error.status === 404) {
-        throw new Error(`Template repository '${templateRepo}' not found in organization '${this.org}'`);
+        throw wrap(`Template repository '${templateRepo}' not found in organization '${this.org}'`);
       } else if (error.status === 422) {
-        throw new Error(`Repository '${newRepoName}' already exists or invalid name`);
+        throw wrap(`Repository '${newRepoName}' already exists or invalid name`);
       } else if (error.status === 403) {
-        throw new Error('Insufficient permissions. Check your GitHub token scopes.');
+        throw wrap('Insufficient permissions. Check your GitHub token scopes.');
       } else if (error.status === 401) {
-        throw new Error('Authentication failed. Check your GitHub token.');
+        throw wrap('Authentication failed. Check your GitHub token.');
       }
       throw error;
     }
@@ -76,14 +77,15 @@ export class RepositoryService {
 
       console.log(chalk.green(`✓ Added ${username} with ${permission} (write) permissions`));
     } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
       if (error.status === 404) {
-        throw new Error(`Repository '${repoName}' or user '${username}' not found`);
+        throw wrap(`Repository '${repoName}' or user '${username}' not found`);
       } else if (error.status === 422) {
-        throw new Error(`Invalid username '${username}' or permission level '${permission}'`);
+        throw wrap(`Invalid username '${username}' or permission level '${permission}'`);
       } else if (error.status === 403) {
-        throw new Error('Insufficient permissions. Admin token required to add collaborators.');
+        throw wrap('Insufficient permissions. Admin token required to add collaborators.');
       } else if (error.status === 401) {
-        throw new Error('Authentication failed. Check your GitHub token.');
+        throw wrap('Authentication failed. Check your GitHub token.');
       }
       throw error;
     }
@@ -105,12 +107,13 @@ export class RepositoryService {
 
       console.log(chalk.green(`✓ Deleted repository: ${repoName}`));
     } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
       if (error.status === 404) {
-        throw new Error(`Repository '${repoName}' not found in organization '${this.org}'`);
+        throw wrap(`Repository '${repoName}' not found in organization '${this.org}'`);
       } else if (error.status === 403) {
-        throw new Error('Insufficient permissions. Admin token required with delete_repo scope.');
+        throw wrap('Insufficient permissions. Admin token required with delete_repo scope.');
       } else if (error.status === 401) {
-        throw new Error('Authentication failed. Check your GitHub token.');
+        throw wrap('Authentication failed. Check your GitHub token.');
       }
       throw error;
     }

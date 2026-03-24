@@ -1,79 +1,108 @@
 # Template repo
 
-## Content
+## What the template contains
 
-create a repo that contain all the config and files the students need.
+The template repo should contain all config and starter files that students need:
 
-- `.github`
+- `.github/` — workflows for testing and grading
 - `.gitignore`
-- `.vscode`
+- `.vscode/` — recommended editor settings
 - `.editorconfig`
-- `tests`
-- `Taskfile.yml`
+- `tests/` — test suites for each kmom
+- `Taskfile.yml` — task runner commands
 
-## Student GitHub repo
+## Important repos
 
-### Information
+| Repo | Purpose |
+|---|---|
+| `template2` | Template repo used to create student repos |
+| `utils2` | GitHub workflow used from student repos |
+| `owner` | This repo — scripts and documentation about the organisation |
 
-Important repos:
-
-- utils2 - GitHub workflow used from student repo
-- template2 - the template repo used to create student repos
-- owner - scripts for creating student repo and information about the organisation  
-
-(utils och template is used for the python course)
+> `utils` and `template` (without the `2`) are used for the Python course.
 
 
-### How to create student repo
 
-1. The student hands in the task **Github invite** on Canvas with their GitHub account.
-2. A student repo should be created (manually or crontab job).  
+## Student workflow
+
+### 1. Create student repo
+
+**What needs to happen:** When a student submits their GitHub username on Canvas, a private repo should be created from the template, the student invited to the org as collaborator, branches created, and labels synced.
+
+**How (manual):**
+1. Invite the student to the org.
+2. Create a repo from `template2` named `algo-<student-acronym>`.
+3. Add the student as collaborator with push access.
+4. Create branches: `bth/submit/kmom03`, `bth/submit/kmom06`, `bth/submit/kmom10`.
+5. Apply labels from `org-settings/labels.json` to the repo.
+6. Post the repo URL as a comment on their Canvas submission and grade with G.
+
+**How (CLI) — process all pending submissions at once:**
 ```bash
-cd src/invite-to-organisation
-pnpm install
-node invite.mjs
+npm run process-submissions
 ```
-3. The student finds its repo on GitHub, clones it in the  `dbwebb-kurser`-directory and run **task setup**. Run suggested commands until every test is green.
+This fetches all `submitted` submissions from Canvas, creates repos, creates kmom branches, invites students, syncs labels, and grades — all automatically. See the [main README](./README.md#10-integrate-with-canvas) for configuration details.
 
+**How (CLI) — create a single repo manually:**
+```bash
+npm run create-repo -- -n algo-abcd25 -t template2 -u studentGitHubUsername
+```
 
-### Hand in kmom01 and kmom02
+**How (CLI) — schedule with PM2 (runs every 3 minutes):**
+```bash
+npx pm2 start ecosystem.config.js
+```
 
-1. Do the task in the kmom (git add, git commit and push)
-2. tag when you are ready
+### 2. Student: clone and setup
+
+The student finds their repo on GitHub, clones it into the `dbwebb-kurser` directory and runs `task setup`. Follow suggested commands until every test is green.
+
+### 3. Hand in kmom01 and kmom02
+
+1. Do the task in the kmom (`git add`, `git commit` and `git push`).
+2. Tag when ready:
 ```bash
 git tag -a v01.0 -m "First draft of kmom01."
 git push --tags
 ```
-
 If something goes wrong, follow the instructions and try again.
 
-### PR kmom03
+### 4. PR for kmom03
 
-1. No code to hand in. Do a PR and follow the instructions."
+No code to hand in. Create a PR and follow the instructions.
 
 
 
-### Commands that does not work
+## Troubleshooting
 
+### Delete a student repo
+
+**How (manual):** Delete the repo from the GitHub UI.
+
+**How (CLI):**
 ```bash
-# Delete repo algo-grmstud
-npx bth-algo delete-repo -n algo-grmstud
+npm run delete-repo -- -n algo-grmstud
 ```
-But it works to remove a repo from GitHub.
 
-### If issues with labels in when creating student repo
+### Fix missing labels on a student repo
 
-NOTE: if student repo does not get labels, run:
-`./set_labels_on_studentrepo.sh <algo-abcd25>` som ligger i src/invite-to-organisation
-`npm run configure-org`
-answer n (no) to everything except: 
+**What:** A student repo is missing the expected labels, or has extra default labels that should be removed.
 
+**How (CLI) — sync labels on a single repo:**
+Re-run `process-submissions` — it will sync labels on repos that already exist (creating missing labels, updating changed ones, deleting extras).
+
+**How (CLI) — bulk apply labels to all matching repos:**
+```bash
+npm run configure-org
+```
+Answer `n` to everything except:
 ```text
-═══ LABELS ═══  
-Found 8 label(s) to manage  
+═══ LABELS ═══
+Found 8 label(s) to manage
 Found 6 repositories matching patterns
 
 Apply labels to 6 existing repositories? (Y/n) Y
 ```
-=> the student repo gets its labels
+
+> **Note:** `configure-org` creates and updates labels but does not delete extras. Use `process-submissions` for full sync (create + update + delete).
 

@@ -78,16 +78,24 @@ https://github.com/organizations/bth-algo/settings/rules
 
 ### Add labels
 
-The labels are used when grading the submissions. Labels are managed through the configuration tool.
+Labels are used when grading submissions. GitHub does not support organisation-level labels — they must be set on individual repositories.
 
-**Important:** GitHub's API does not support organization-level labels. Labels must be set on individual repositories.
+**What needs to happen:**
+- Each student repo (and the template repo) should have the labels defined in `org-settings/labels.json`.
+- Labels not in that file should be removed from student repos.
 
-**Recommended Approach:**
-1. Configure labels in `org-settings/labels.json`
-2. Run `npm run configure-org` to apply labels to existing repositories matching the configured patterns
-3. **Add the same labels to your template repository** so all new repositories created from the template will automatically inherit them
+**How (manual):** Go to each repo's _Issues → Labels_ page and create/edit/delete labels to match `org-settings/labels.json`.
 
-The configuration tool can apply labels to multiple repositories at once based on regex patterns (e.g., `algo-.*` matches all student repos starting with "algo-").
+**How (CLI) — bulk apply to existing repos:**
+```bash
+npm run configure-org
+```
+Answer `Y` when prompted to apply labels. This creates/updates labels on all repos matching the patterns in `labels.json` (e.g. `algo-.*`).
+
+**How (CLI) — single repo sync (including deletion of extras):**
+The `process-submissions` command automatically syncs labels (create, update, **and delete** extras) on each student repo it creates.
+
+To ensure new repos inherit labels from the start, also add the labels to your **template repository**.
 
 ![](img/label.png)
 
@@ -110,35 +118,33 @@ https://github.com/organizations/bth-algo/settings/member_privileges
 Turn off repository access, "No repositories".
 
 
-### Actions secrets and variables - Not updated
+### Actions secrets and variables
 
-Hur ska vi göra här? köra canvas integration i workflows eller från en server. Det påverkar vad som behövs här.
+**What needs to happen:** GitHub Actions workflows (e.g. for running student tests) need access to tokens and course data.
 
-Jag vet inte om/hur de ska köra tester i C# det påverkar också vad som ska ligga här.
+**How (manual):** Configure at https://github.com/organizations/bth-algo/settings/secrets/actions and https://github.com/organizations/bth-algo/settings/variables/actions.
+
+**How (CLI):**
+1. Define secrets in `org-settings/action-secrets.env` and variables in `org-settings/action-variables.json`.
+2. Run:
+   ```bash
+   npm run configure-org
+   ```
 
 #### Secrets
 
-- `READ_ORG_TOKEN` - Github token with access to ORG. Created from a user. Classic token i easier than fine-grade.
-- `CANVAS_API_TOKEN` - ?
+- `READ_ORG_TOKEN` — GitHub token with read access to the org. Classic token is easier than fine-grained.
 
 #### Variables
 
-- `COURSE_ID` -  Canvas course ID
-- `ASSIGNMENTS` -  if using dynamic code for checking what to test use this. Ex.
-    ```
+- `COURSE_ID` — Canvas course ID.
+- `ASSIGNMENTS` — mapping of branch names to Canvas assignment IDs, e.g.:
+    ```json
     {
-    "bth/submit/kmom03": 58711,
-    "bth/submit/kmom06": 58714,
-    "bth/submit/kmom10": 58715,
-    "bth/submit/test-gitconfig": 59262
+      "bth/submit/kmom03": 58711,
+      "bth/submit/kmom06": 58714,
+      "bth/submit/kmom10": 58715
     }
     ```
-- `KMOM_PATHS` - if using dynamic code for checking what to test use this. Ex.
-    ```
-    {
-    "bth/submit/kmom03": 58711,
-    "bth/submit/kmom06": 58714,
-    "bth/submit/kmom10": 58715,
-    "bth/submit/test-gitconfig": 59262
-    }
-    ```
+
+> **Note:** The Canvas integration for grading (inviting students, creating repos) runs from the CLI via `npm run process-submissions`, **not** from GitHub Actions. The Canvas token (`CANVAS_TOKEN`) is stored in the local `.env` file, not as an Actions secret.

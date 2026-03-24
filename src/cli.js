@@ -699,6 +699,7 @@ program
   .command('process-submissions')
   .description('Process Canvas submissions: invite students, create repos, sync labels, and grade')
   .option('-t, --template <template>', 'Template repository name', 'template2')
+  .option('-b, --branches <mode>', 'Branch creation mode: all or kmom03-only', 'kmom03-only')
   .action(async (options) => {
     try {
       const canvasToken = process.env.CANVAS_TOKEN;
@@ -753,6 +754,12 @@ program
             continue;
           }
 
+          if (!email) {
+            console.error(chalk.red(`[user=${userId}] No email found in submission.`));
+            await notify(410, 'No email found in submission.');
+            continue;
+          }
+
           const emailPrefix = email.split('@')[0];
           const repoName = `${repoPrefix}-${emailPrefix}`;
           const repoUrl = `https://github.com/${organization}/${repoName}`;
@@ -804,7 +811,7 @@ program
             );
             repoCreated = true;
           } catch (error) {
-            if (error.message.includes('already exists')) {
+            if (error.status === 422) {
               console.log(chalk.yellow(`[${repoName}] Repository already exists.`));
               repoCreated = true; // still sync labels
             } else {
@@ -822,6 +829,20 @@ program
               console.error(chalk.red(`[${repoName}] Failed to add ${githubUsername} as collaborator: ${error.message}`));
               await notify(error.status ?? 500, `Failed to add ${githubUsername} as collaborator to ${repoName}: ${error.message}`);
               continue;
+            }
+
+            // --- Wait for repo to be ready ---
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // --- Create branches ---
+            try {
+              const branchService = new BranchService(adminClient, organization);
+              const branches = BranchService.getKmomBranches(options.branches);
+              console.log(chalk.blue(`[${repoName}] Creating ${branches.length} branch(es)...`));
+              const branchResults = await branchService.createBranches(repoName, branches);
+              console.log(chalk.green(`[${repoName}] Branches: ${branchResults.created.length} created, ${branchResults.existing.length} existing, ${branchResults.failed.length} failed`));
+            } catch (error) {
+              console.error(chalk.red(`[${repoName}] Failed to create branches: ${error.message}`));
             }
 
             // --- Sync labels ---

@@ -28,9 +28,6 @@ export function loadCredentials() {
   if (!studentToken) {
     throw new Error('Missing GITHUB_STUDENT_TOKEN environment variable');
   }
-  if (!orgName) {
-    throw new Error('Missing GITHUB_ORG_NAME environment variable');
-  }
 
   return {
     adminToken,
@@ -70,5 +67,8 @@ export function getGithubClient(role) {
  */
 export function getOrganizationName() {
   const credentials = loadCredentials();
+  if (!credentials.organizationName) {
+    throw new Error('Missing GITHUB_ORG_NAME environment variable. Set it in .env or use per-course organization in courses.json.');
+  }
   return credentials.organizationName;
 }
