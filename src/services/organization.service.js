@@ -472,7 +472,7 @@ export class OrganizationService {
    */
   async getRepositories(patterns = null) {
     try {
-      const { data } = await this.octokit.repos.listForOrg({
+      const data = await this.octokit.paginate(this.octokit.repos.listForOrg, {
         org: this.org,
         per_page: 100,
         type: 'all'

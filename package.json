@@ -14,7 +14,8 @@
     "configure-org": "node src/cli.js configure-org",
     "restore-org": "node src/cli.js restore-org",
     "list-branches": "node src/cli.js list-branches",
-    "process-submissions": "node src/cli.js process-submissions"
+    "process-submissions": "node src/cli.js process-submissions",
+    "archive-repos": "node src/cli.js archive-repos"
   },
   "keywords": [
     "github",

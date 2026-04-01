@@ -138,4 +138,87 @@ export class RepositoryService {
       throw error;
     }
   }
+
+  /**
+   * List outside collaborators for a repository
+   * @param {string} repoName - Repository name
+   * @returns {Promise<array>} Array of collaborator objects with permissions
+   */
+  async listCollaborators(repoName) {
+    try {
+      const { data } = await this.octokit.repos.listCollaborators({
+        owner: this.org,
+        repo: repoName,
+        affiliation: 'outside',
+        per_page: 100
+      });
+      return data;
+    } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
+      if (error.status === 404) {
+        throw wrap(`Repository '${repoName}' not found in organization '${this.org}'`);
+      } else if (error.status === 403) {
+        throw wrap('Insufficient permissions. Admin token required to list collaborators.');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Rename a repository
+   * @param {string} repoName - Current repository name
+   * @param {string} newName - New repository name
+   * @returns {Promise<object>} Updated repository data
+   */
+  async renameRepo(repoName, newName) {
+    try {
+      console.log(chalk.blue(`Renaming repository ${repoName} → ${newName}...`));
+
+      const { data } = await this.octokit.repos.update({
+        owner: this.org,
+        repo: repoName,
+        name: newName
+      });
+
+      console.log(chalk.green(`✓ Renamed repository: ${repoName} → ${newName}`));
+      return data;
+    } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
+      if (error.status === 404) {
+        throw wrap(`Repository '${repoName}' not found in organization '${this.org}'`);
+      } else if (error.status === 422) {
+        throw wrap(`Repository name '${newName}' already exists or is invalid`);
+      } else if (error.status === 403) {
+        throw wrap('Insufficient permissions. Admin token required to rename repositories.');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Archive a repository
+   * @param {string} repoName - Repository name
+   * @returns {Promise<void>}
+   */
+  async archiveRepo(repoName) {
+    try {
+      console.log(chalk.blue(`Archiving repository ${repoName}...`));
+
+      await this.octokit.repos.update({
+        owner: this.org,
+        repo: repoName,
+        archived: true
+      });
+
+      console.log(chalk.green(`✓ Archived repository: ${repoName}`));
+    } catch (error) {
+      const wrap = (msg) => { const e = new Error(msg); e.status = error.status; return e; };
+      if (error.status === 404) {
+        throw wrap(`Repository '${repoName}' not found in organization '${this.org}'`);
+      } else if (error.status === 403) {
+        throw wrap('Insufficient permissions. Admin token required to archive repositories.');
+      }
+      throw error;
+    }
+  }
 }

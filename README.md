@@ -24,10 +24,33 @@ pnpm install
 | `npm run delete-repo -- -n <name>` | Delete a repository (admin only) |
 | `npm run list-branches -- -n <name>` | List all branches in a repository |
 | `npm run process-submissions` | Process Canvas submissions: invite students, create repos, sync labels, grade |
+| `npm run archive-repos -- -p <prefix> -s <suffix>` | Archive repositories matching a prefix: downgrade collaborators, rename, and archive |
+
+### archive-repos
+
+Archives all repositories whose name starts with `<prefix>-`. For each matched repo:
+
+1. Outside collaborators with `admin` permission are downgraded to `write`.
+2. The repo is renamed to `<old-name>-<suffix>`.
+3. The repo is archived.
+
+Repositories with more than one outside collaborator have their names written to `multi-contributors.txt` in the project root for manual review.
+
+```bash
+npm run archive-repos -- -p <prefix> -s <suffix>
+
+# Example: archive all python25-* repos, renaming them to *-h25
+npm run archive-repos -- -p python25 -s h25
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `-p, --prefix <prefix>` | Yes | Match repos whose name starts with `<prefix>-` |
+| `-s, --suffix <suffix>` | Yes | Suffix appended to each repo name (e.g. `h25`) |
+
+Already-archived repositories are skipped automatically. A single confirmation prompt is shown before any changes are made.
 
 ### Environment variables
-
-Configure these in the `.env` file at the project root:
 
 | Variable | Required | Description |
 |---|---|---|

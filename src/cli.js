@@ -882,5 +882,147 @@ program
     }
   });
 
+/**
+ * Archive Repos Command
+ * Finds all repos matching a prefix, downgrades admin collaborators to write,
+ * renames repos with a suffix, and archives them.
+ */
+program
+  .command('archive-repos')
+  .description('Archive repositories matching a prefix: downgrade collaborators, rename, and archive')
+  .requiredOption('-p, --prefix <prefix>', 'Repository name prefix to match (e.g. "algo")')
+  .requiredOption('-s, --suffix <suffix>', 'Suffix to append to repo names (e.g. "h25")')
+  .action(async (options) => {
+    const prompt = new PromptManager();
+
+    try {
+      const org = getOrganizationName();
+      const client = getGithubClient(UserRole.ADMIN);
+      const repoService = new RepositoryService(client, org);
+      const orgService = new OrganizationService(client, org);
+
+      console.log(chalk.blue(`\n🔧 Using admin credentials for organization: ${org}\n`));
+
+      // Fetch and filter repos matching prefix
+      const pattern = `^${options.prefix}-`;
+      const allRepos = await orgService.getRepositories([pattern]);
+
+      if (allRepos.length === 0) {
+        console.log(chalk.yellow(`No repositories found matching prefix "${options.prefix}-"`));
+        return;
+      }
+
+      // Display matched repos
+      console.log(chalk.blue(`Found ${allRepos.length} repository(ies) matching "${options.prefix}-":\n`));
+      allRepos.forEach(repo => {
+        console.log(chalk.white(`  • ${repo.name}${repo.archived ? chalk.gray(' (already archived)') : ''}`));
+      });
+
+      // Filter out already archived repos
+      const repos = allRepos.filter(repo => !repo.archived);
+      if (repos.length === 0) {
+        console.log(chalk.yellow('\nAll matching repositories are already archived.'));
+        return;
+      }
+
+      console.log(chalk.blue(`\n${repos.length} repository(ies) will be processed (skipping ${allRepos.length - repos.length} already archived).`));
+      console.log(chalk.blue(`Each repo will be: collaborators downgraded (admin→write) → renamed to <name>-${options.suffix} → archived\n`));
+
+      // Single batch confirmation
+      const confirmed = await prompt.confirm(
+        chalk.yellow(`Proceed with archiving ${repos.length} repository(ies)?`)
+      );
+
+      if (!confirmed) {
+        console.log(chalk.yellow('\nOperation cancelled.\n'));
+        return;
+      }
+
+      // Track results
+      const results = {
+        successful: [],
+        failed: [],
+        multiContributorRepos: []
+      };
+
+      for (const repo of repos) {
+        console.log(chalk.blue(`\n─── Processing: ${repo.name} ───`));
+
+        try {
+          // 1. List outside collaborators
+          const collaborators = await repoService.listCollaborators(repo.name);
+
+          // Track repos with multiple collaborators
+          if (collaborators.length > 1) {
+            results.multiContributorRepos.push(repo.name);
+            console.log(chalk.yellow(`  ⚠ Multiple outside collaborators (${collaborators.length}) — logged to multi-contributors.txt`));
+          }
+
+          // 2. Downgrade admin collaborators to write
+          for (const collab of collaborators) {
+            if (collab.permissions?.admin) {
+              console.log(chalk.blue(`  Downgrading ${collab.login} from admin to write...`));
+              await repoService.addCollaborator(repo.name, collab.login, 'push');
+            }
+          }
+
+          // 3. Rename repo
+          const newName = `${repo.name}-${options.suffix}`;
+          await repoService.renameRepo(repo.name, newName);
+
+          // Wait for GitHub to propagate the rename
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+          // 4. Archive repo (use new name after rename)
+          await repoService.archiveRepo(newName);
+
+          results.successful.push(repo.name);
+        } catch (error) {
+          console.log(chalk.red(`  ✗ Failed: ${error.message}`));
+          results.failed.push(`${repo.name} - ${error.message}`);
+        }
+      }
+
+      // Write multi-contributors file
+      if (results.multiContributorRepos.length > 0) {
+        const fileContent = results.multiContributorRepos.join('\n') + '\n';
+        await fs.writeFile('multi-contributors.txt', fileContent, 'utf-8');
+        console.log(chalk.blue(`\n📝 Wrote ${results.multiContributorRepos.length} repo(s) to multi-contributors.txt`));
+      }
+
+      // Summary
+      console.log(chalk.blue.bold('\n═══════════════════════════════'));
+      console.log(chalk.blue.bold('📊 ARCHIVE SUMMARY'));
+      console.log(chalk.blue.bold('═══════════════════════════════\n'));
+
+      console.log(chalk.green(`✓ Successful: ${results.successful.length}`));
+      if (results.successful.length > 0) {
+        results.successful.forEach(item => console.log(chalk.green(`  • ${item} → ${item}-${options.suffix}`)));
+      }
+
+      if (results.multiContributorRepos.length > 0) {
+        console.log(chalk.yellow(`\n⚠ Multiple collaborators: ${results.multiContributorRepos.length}`));
+        results.multiContributorRepos.forEach(item => console.log(chalk.yellow(`  • ${item}`)));
+      }
+
+      console.log(chalk.red(`\n✗ Failed: ${results.failed.length}`));
+      if (results.failed.length > 0) {
+        results.failed.forEach(item => console.log(chalk.red(`  • ${item}`)));
+      }
+
+      console.log(chalk.blue.bold('\n═══════════════════════════════\n'));
+      console.log(chalk.green('✅ Archive operation complete!\n'));
+
+    } catch (error) {
+      console.error(chalk.red(`\n❌ Error: ${error.message}\n`));
+      if (error.stack) {
+        console.error(chalk.gray(error.stack));
+      }
+      process.exit(1);
+    } finally {
+      prompt.close();
+    }
+  });
+
 // Parse command line arguments
 program.parse();
