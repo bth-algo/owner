@@ -462,9 +462,12 @@ program
       } else {
         console.log(chalk.blue(`Found ${labelsConfig.labels.length} label(s) to manage`));
         
-        // Get repositories matching patterns
-        const matchingRepos = await orgService.getRepositories(labelsConfig.apply_to_repos);
-        console.log(chalk.blue(`Found ${matchingRepos.length} repositories matching patterns`));
+        // Get repositories matching patterns (exclude archived)
+        const allMatchingRepos = await orgService.getRepositories(labelsConfig.apply_to_repos);
+        const matchingRepos = allMatchingRepos.filter(r => !r.archived);
+        const skippedArchived = allMatchingRepos.length - matchingRepos.length;
+        console.log(chalk.blue(`Found ${matchingRepos.length} repositories matching patterns${skippedArchived > 0 ? ` (skipping ${skippedArchived} archived)` : ''}`));
+        
         
         if (matchingRepos.length > 0) {
           const applyToExisting = await prompt.confirm(
@@ -890,8 +893,9 @@ program
 program
   .command('archive-repos')
   .description('Archive repositories matching a prefix: downgrade collaborators, rename, and archive')
-  .requiredOption('-p, --prefix <prefix>', 'Repository name prefix to match (e.g. "algo")')
+  .requiredOption('-p, --prefix <prefix>', 'Repository name prefix to match (e.g. "python")')
   .requiredOption('-s, --suffix <suffix>', 'Suffix to append to repo names (e.g. "h25")')
+  .option('-e, --exclude <repos>', 'Comma-separated list of repository names to exclude (e.g. "python-repo1,python-repo2")', '')
   .action(async (options) => {
     const prompt = new PromptManager();
 
@@ -918,14 +922,25 @@ program
         console.log(chalk.white(`  • ${repo.name}${repo.archived ? chalk.gray(' (already archived)') : ''}`));
       });
 
-      // Filter out already archived repos
-      const repos = allRepos.filter(repo => !repo.archived);
+      // Filter out excluded repos
+      const excludeList = options.exclude
+        ? options.exclude.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+
+      if (excludeList.length > 0) {
+        console.log(chalk.blue(`\nExcluding ${excludeList.length} repo(s): ${excludeList.join(', ')}`));
+      }
+
+      // Filter out already archived repos and excluded repos
+      const repos = allRepos.filter(repo => !repo.archived && !excludeList.includes(repo.name));
       if (repos.length === 0) {
         console.log(chalk.yellow('\nAll matching repositories are already archived.'));
         return;
       }
 
-      console.log(chalk.blue(`\n${repos.length} repository(ies) will be processed (skipping ${allRepos.length - repos.length} already archived).`));
+      const archivedCount = allRepos.filter(r => r.archived).length;
+      const excludedCount = allRepos.filter(r => !r.archived && excludeList.includes(r.name)).length;
+      console.log(chalk.blue(`\n${repos.length} repository(ies) will be processed (skipping ${archivedCount} already archived, ${excludedCount} excluded).`));
       console.log(chalk.blue(`Each repo will be: collaborators downgraded (admin→write) → renamed to <name>-${options.suffix} → archived\n`));
 
       // Single batch confirmation

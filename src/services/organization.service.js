@@ -194,6 +194,23 @@ export class OrganizationService {
    * @returns {Promise<void>}
    */
   async updateMemberPrivileges(settings) {
+    // These fields appear in GET /orgs/{org} but cannot be set via PATCH /orgs/{org}.
+    const READ_ONLY_FIELDS = [
+      '_note',
+      'members_can_delete_repositories',
+      'members_can_delete_issues',
+      'members_can_change_repo_visibility',
+      'members_can_create_teams',
+    ];
+
+    const unsupported = Object.keys(settings).filter(k => READ_ONLY_FIELDS.includes(k));
+    if (unsupported.length > 0) {
+      console.warn(chalk.yellow(`  ⚠ The following privilege(s) cannot be set via the GitHub API and must be changed manually in the GitHub UI: ${unsupported.join(', ')}`));
+      settings = Object.fromEntries(Object.entries(settings).filter(([k]) => !READ_ONLY_FIELDS.includes(k)));
+    }
+
+    if (Object.keys(settings).length === 0) return;
+
     try {
       await this.octokit.orgs.update({
         org: this.org,
